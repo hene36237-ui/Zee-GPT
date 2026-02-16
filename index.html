@@ -1,85 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zee AI Chatbot</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #121212;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    #chatContainer {
-      width: 400px;
-      height: 600px;
-      border: 2px solid #333;
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      background-color: #1e1e1e;
-    }
-    #chatHeader {
-      padding: 15px;
-      background-color: #000;
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-      border-top-left-radius: 10px;
-      border-top-right-radius: 10px;
-    }
-    #messages {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      border-top: 1px solid #333;
-      border-bottom: 1px solid #333;
-      background-color: #1e1e1e;
-    }
-    .user {
-      color: #00bfff;
-      margin-bottom: 5px;
-    }
-    .bot {
-      color: #7fff00;
-      margin-bottom: 5px;
-    }
-    #inputArea {
-      display: flex;
-      padding: 10px;
-      background-color: #1e1e1e;
-      border-bottom-left-radius: 10px;
-      border-bottom-right-radius: 10px;
-    }
-    #userInput {
-      flex: 1;
-      padding: 10px;
-      border-radius: 5px;
-      border: none;
-      font-size: 14px;
-      outline: none;
-      background-color: #333;
-      color: #fff;
-    }
-    #sendBtn {
-      margin-left: 5px;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 5px;
-      background-color: #000;
-      color: #fff;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    #sendBtn:hover {
-      background-color: #444;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zee AI Chatbot</title>
+<style>
+body { font-family: Arial; background:#121212; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+#chatContainer { width:400px; height:600px; border:2px solid #333; border-radius:10px; display:flex; flex-direction:column; background:#1e1e1e; }
+#chatHeader { padding:15px; text-align:center; font-size:20px; font-weight:bold; border-top-left-radius:10px; border-top-right-radius:10px; background:#000; }
+#messages { flex:1; padding:10px; overflow-y:auto; border-top:1px solid #333; border-bottom:1px solid #333; background:#1e1e1e; }
+.user { color:#00bfff; margin-bottom:5px; }
+.bot { color:#7fff00; margin-bottom:5px; }
+#inputArea { display:flex; padding:10px; background:#1e1e1e; border-bottom-left-radius:10px; border-bottom-right-radius:10px; }
+#userInput { flex:1; padding:10px; border-radius:5px; border:none; font-size:14px; outline:none; background:#333; color:#fff; }
+#sendBtn { margin-left:5px; padding:10px 15px; border:none; border-radius:5px; background:#000; color:#fff; cursor:pointer; font-weight:bold; }
+#sendBtn:hover { background:#444; }
+</style>
 </head>
 <body>
 
@@ -93,54 +29,50 @@
 </div>
 
 <script>
-  // Pre-inserted questions & answers
-  const botData = {
-    "hi": "Hello! How can I help you today?",
-    "hello": "Hi there! How’s it going?",
-    "how are you": "I'm just a bot, but I'm doing great! 😊",
-    "what is your name": "I'm Zee AI!",
-    "talk to me": "Sure! Ask me anything or just say hi.",
-    "who created you": "I was created by Ice738!",
-    "what can you do": "I can answer common questions you ask!",
-    "default": "Sorry, I don't understand that. Can you try asking something else?"
-  };
+const botData = {
+  "hello": "Hi there! How’s it going?",
+  "hi": "Hello! How can I help you today?",
+  "how are you": "I'm doing great! Thanks for asking!",
+  "good morning": "Good morning! Hope you have a great day!",
+  "good night": "Good night! Sleep well 😴",
+  "who created you": "Henry Zee World Comedy created me!",
+  "what is your name": "I'm Zee AI!",
+  "talk to me": "Sure! Ask me anything or just say hi.",
+  "what can you do": "I can answer thousands of common questions you ask!",
+  "thanks": "You're welcome! 😊",
+  "thank you": "No problem!",
+  "default": "Hey 👋 wait 😊 let me think about it."
+  // ✅ Later you can add 5000–9000 more Q&A entries here
+};
 
-  const inputField = document.getElementById('userInput');
-  const sendBtn = document.getElementById('sendBtn');
-  const messagesDiv = document.getElementById('messages');
+const inputField = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const messagesDiv = document.getElementById('messages');
 
-  function sendMessage() {
-    const userText = inputField.value.trim();
-    if (!userText) return;
+function sendMessage() {
+  const userText = inputField.value.trim();
+  if(!userText) return;
 
-    // Display user message
-    const userMsg = document.createElement('div');
-    userMsg.className = 'user';
-    userMsg.textContent = "You: " + userText;
-    messagesDiv.appendChild(userMsg);
+  const userMsg = document.createElement('div');
+  userMsg.className = 'user';
+  userMsg.textContent = "You: " + userText;
+  messagesDiv.appendChild(userMsg);
 
-    // Get bot response
-    const key = userText.toLowerCase();
-    const botReply = botData[key] || botData["default"];
+  const key = userText.toLowerCase();
+  const botReply = botData[key] || botData["default"];
 
-    const botMsg = document.createElement('div');
-    botMsg.className = 'bot';
-    botMsg.textContent = "Zee AI: " + botReply;
-    messagesDiv.appendChild(botMsg);
+  const botMsg = document.createElement('div');
+  botMsg.className = 'bot';
+  botMsg.textContent = "Zee AI: " + botReply;
+  messagesDiv.appendChild(botMsg);
 
-    // Scroll to bottom
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  inputField.value = '';
+  inputField.focus();
+}
 
-    // Clear input
-    inputField.value = '';
-    inputField.focus();
-  }
-
-  // Event listeners
-  sendBtn.addEventListener('click', sendMessage);
-  inputField.addEventListener('keypress', function(e){
-    if(e.key === 'Enter') sendMessage();
-  });
+sendBtn.addEventListener('click', sendMessage);
+inputField.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
 </script>
 
 </body>
