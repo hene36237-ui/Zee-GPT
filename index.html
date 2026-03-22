@@ -369,7 +369,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:11p
           <select class="ssel" id="s-model" onchange="model=this.value">
             <option value="llama-3.1-8b-instant">Llama 3.1 8B ⚡ Fast</option>
             <option value="llama-3.3-70b-versatile" selected>Llama 3.3 70B 🧠 Smart</option>
-            <option value="gemma2-9b-it">Gemma 2</option>
+            <option value="llama3-8b-8192">Llama 3 8B</option>
             <option value="mistral-saba-24b">Mistral</option>
           </select>
         </div>
@@ -2019,7 +2019,7 @@ async function send(){
 
   let full='';
   // Smart model fallback chain
-  const modelChain=['llama-3.3-70b-versatile','llama-3.1-8b-instant','gemma2-9b-it'];
+  const modelChain=['llama-3.3-70b-versatile','llama-3.1-8b-instant','llama3-8b-8192'];
   let usedModel=model;
   let success=false;
 
