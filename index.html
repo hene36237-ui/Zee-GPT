@@ -1202,7 +1202,7 @@ Give exact words. Build confidence. Simulate responses.
 Track meaningful coincidences and recurring words/themes.
 Connect dots across the whole conversation.
 "You've said 'stuck' 14 times. Always about the same thing. What IS that thing?"`,
-  maxTokens:4000,temperature:0.94,memory:true,fontSize:'19px',autoRead:false
+  maxTokens:800,temperature:0.94,memory:true,fontSize:'19px',autoRead:false
 };
 
 const TRAINING={
@@ -2018,40 +2018,70 @@ async function send(){
   currentHistory.push({role:'user',content:userContent});
 
   let full='';
-  try{
-    const res=await fetch(GROQ_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${GROQ_KEY}`},
-      body:JSON.stringify({model,messages:msgs,stream:true,max_tokens:cfg.maxTokens||4000,temperature:cfg.temperature||0.85})
-    });
-    if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`HTTP ${res.status}`);}
-    const reader=res.body.getReader();const dec=new TextDecoder();
-    while(true){
-      const{value,done}=await reader.read();if(done)break;
-      for(const line of dec.decode(value).split('\n')){
-        if(!line.startsWith('data: ')||line==='data: [DONE]')continue;
-        try{const d=JSON.parse(line.slice(6));const chunk=d.choices?.[0]?.delta?.content||'';if(chunk)full+=chunk;}catch{}
+  // Smart model fallback chain
+  const modelChain=['llama-3.3-70b-versatile','llama-3.1-8b-instant','gemma2-9b-it'];
+  let usedModel=model;
+  let success=false;
+
+  for(let attempt=0;attempt<modelChain.length;attempt++){
+    usedModel=attempt===0?model:modelChain[attempt];
+    try{
+      const res=await fetch(GROQ_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${GROQ_KEY}`},
+        body:JSON.stringify({model:usedModel,messages:msgs,stream:true,max_tokens:800,temperature:cfg.temperature||0.85})
+      });
+      if(!res.ok){
+        const e=await res.json();
+        const errMsg=e.error?.message||`HTTP ${res.status}`;
+        // Rate limit — try next model
+        if(errMsg.includes('rate_limit')||errMsg.includes('429')||errMsg.includes('TPM')||errMsg.includes('RPM')){
+          if(attempt<modelChain.length-1){
+            await new Promise(r=>setTimeout(r,1500));
+            continue; // try next model
+          }
+          throw new Error(errMsg);
+        }
+        throw new Error(errMsg);
       }
+      const reader=res.body.getReader();const dec=new TextDecoder();
+      while(true){
+        const{value,done}=await reader.read();if(done)break;
+        for(const line of dec.decode(value).split('\n')){
+          if(!line.startsWith('data: ')||line==='data: [DONE]')continue;
+          try{const d=JSON.parse(line.slice(6));const chunk=d.choices?.[0]?.delta?.content||'';if(chunk)full+=chunk;}catch{}
+        }
+      }
+      success=true;
+      break; // worked — stop trying
+    }catch(err){
+      if(attempt===modelChain.length-1){
+        // All models failed
+        document.getElementById('typing-indicator')?.remove();
+        const isRate=err.message.includes('rate_limit')||err.message.includes('429');
+        const msg=err.message.includes('401')?'🔑 Invalid API key.':isRate?'⏳ Too many messages. Wait 10 seconds and try again.':err.message.includes('Failed to fetch')?'📶 No internet.':`⚠️ ${esc(err.message)}`;
+        const errWrap=document.createElement('div');errWrap.className='ai-msg';
+        errWrap.innerHTML=`<div class="ai-bubble"><div class="err-msg">${msg}</div></div>`;
+        box.appendChild(errWrap);
+        currentHistory=currentHistory.slice(0,-1);
+        busy=false;document.getElementById('sendbtn').disabled=false;box.scrollTop=box.scrollHeight;ta.focus();
+        return;
+      }
+      // Try next model
+      await new Promise(r=>setTimeout(r,1000));
     }
-    // Remove typing indicator
+  }
+
+  if(success){
     document.getElementById('typing-indicator')?.remove();
     if(!full)full='No response. Try again.';
     addAIMsg(full,false);
     playSound('receive');
-    playSound('recv');
     lastRawText=full;
     currentHistory.push({role:'assistant',content:full});
     saveCurrentChat();
     document.getElementById('copy-bar-wrap').style.display='';
     if(cfg.autoRead||ttsEnabled)setTimeout(speakResponse,400);
-  }catch(err){
-    document.getElementById('typing-indicator')?.remove();
-    const isRate=err.message.includes('rate_limit')||err.message.includes('429');
-    const msg=err.message.includes('401')?'🔑 Invalid API key.':isRate?'⏳ Rate limit — wait a moment.':err.message.includes('Failed to fetch')?'📶 No internet.':`⚠️ ${esc(err.message)}`;
-    const errWrap=document.createElement('div');errWrap.className='ai-msg';
-    errWrap.innerHTML=`<div class="ai-bubble"><div class="err-msg">${msg}</div></div>`;
-    box.appendChild(errWrap);
-    currentHistory=currentHistory.slice(0,-1);
   }
   busy=false;document.getElementById('sendbtn').disabled=false;box.scrollTop=box.scrollHeight;ta.focus();
 }
